@@ -196,7 +196,7 @@ func installDrupal(releaseName, namespace string, parameter map[string]interface
 	helmClient := helm.NewClient(helm.Host(tillerHost))
 	_, err = helmClient.InstallRelease(chartPath, namespace, helm.ReleaseName(releaseName), helm.ValueOverrides(vals))
 	if err != nil {
-		glog.Infof("Failed to create Jenkins : %v \n\n", err)
+		glog.Infof("Failed to create drupal : %v \n\n", err)
 		return err
 	}
 
@@ -245,7 +245,7 @@ func installMySQL(releaseName, namespace string, parameter map[string]interface{
 	return nil
 }
 
-// Install creates a new jenkins chart release
+// Install creates a new chart release
 func Install(id, namespace string, parameter map[string]interface{}) error {
 
 	/* *******TODO*******
@@ -276,10 +276,10 @@ func Install(id, namespace string, parameter map[string]interface{}) error {
 	return nil
 }
 
-// Delete deletes a jenkins chart release
-func Delete(releaseName string) error {
+// Delete deletes a particular chart release
+func Delete(id string) error {
 	helmClient := helm.NewClient(helm.Host(tillerHost))
-	if _, err := helmClient.DeleteRelease(releaseName); err != nil {
+	if _, err := helmClient.DeleteRelease(ReleaseName(id)); err != nil {
 		return err
 	}
 	return nil

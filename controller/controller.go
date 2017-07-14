@@ -31,18 +31,18 @@ func (e errNoSuchInstance) Error() string {
 	return fmt.Sprintf("no such instance with ID %s", e.instanceID)
 }
 
-type jenkinsServiceInstance struct {
+type borawebServiceInstance struct {
 }
 
-type jenkinsController struct {
+type borawebController struct {
 }
 
 // CreateController creates an instance of a service broker controller.
 func CreateController() controller.Controller {
-	return &jenkinsController{}
+	return &borawebController{}
 }
 
-func (c *jenkinsController) Catalog() (*brokerapi.Catalog, error) {
+func (c *borawebController) Catalog() (*brokerapi.Catalog, error) {
 	return &brokerapi.Catalog{
 		Services: []*brokerapi.Service{
 			{
@@ -62,7 +62,7 @@ func (c *jenkinsController) Catalog() (*brokerapi.Catalog, error) {
 	}, nil
 }
 
-func (c *jenkinsController) CreateServiceInstance(
+func (c *borawebController) CreateServiceInstance(
 	id string,
 	req *brokerapi.CreateServiceInstanceRequest,
 ) (*brokerapi.CreateServiceInstanceResponse, error) {
@@ -87,11 +87,11 @@ func (c *jenkinsController) CreateServiceInstance(
 	return &brokerapi.CreateServiceInstanceResponse{}, nil
 }
 
-func (c *jenkinsController) GetServiceInstance(id string) (string, error) {
+func (c *borawebController) GetServiceInstance(id string) (string, error) {
 	return "", errors.New("Unimplemented")
 }
 
-func (c *jenkinsController) RemoveServiceInstance(id string) (*brokerapi.DeleteServiceInstanceResponse, error) {
+func (c *borawebController) RemoveServiceInstance(id string) (*brokerapi.DeleteServiceInstanceResponse, error) {
 
 	if err := client.Delete(id); err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (c *jenkinsController) RemoveServiceInstance(id string) (*brokerapi.DeleteS
 	return &brokerapi.DeleteServiceInstanceResponse{}, nil
 }
 
-func (c *jenkinsController) Bind(
+func (c *borawebController) Bind(
 	instanceID,
 	bindingID string,
 	req *brokerapi.BindingRequest,
@@ -131,7 +131,7 @@ func (c *jenkinsController) Bind(
 
 }
 
-func (c *jenkinsController) UnBind(instanceID string, bindingID string) error {
+func (c *borawebController) UnBind(instanceID string, bindingID string) error {
 	// Since we don't persist the binding, there's nothing to do here.
 	return nil
 }
