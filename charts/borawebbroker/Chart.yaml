@@ -1,0 +1,4 @@
+apiVersion: v1
+description: A Helm chart for borathon web service broker
+name: borawebbroker
+version: 0.1.0
