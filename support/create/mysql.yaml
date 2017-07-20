@@ -1,12 +1,12 @@
 apiVersion: servicecatalog.k8s.io/v1alpha1
 kind: Instance
 metadata:
-  name: mysql-new-20
-  namespace: mysql
+  name: mysql-test-1
+  namespace: default
 spec:
   serviceClassName: mysql
   planName: default
   parameters:
-    instance: mysql-new-20
-    namespace: mysql
-    instanceLabel: mysql-new-20
+    instance: mysql-test-1
+    namespace: default
+    instanceLabel: mysql-test-1

@@ -28,21 +28,33 @@ spec:
         - name: MARIADB_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ template "mariadb.fullname" . }}
-              key: mariadb-root-password
+              name: {{ .Values.dbSecret }}
+              key: password
         - name: MARIADB_HOST
-          value: {{ template "mariadb.fullname" . }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.dbSecret }}
+              key: host
         - name: MARIADB_PORT_NUMBER
-          value: "3306"
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.dbSecret }}
+              key: port
         - name: WORDPRESS_DATABASE_NAME
-          value: {{ default "" .Values.mariadb.mariadbDatabase | quote }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.dbSecret }}
+              key: database
         - name: WORDPRESS_DATABASE_USER
-          value: {{ default "" .Values.mariadb.mariadbUser | quote }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.dbSecret }}
+              key: username
         - name: WORDPRESS_DATABASE_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ template "mariadb.fullname" . }}
-              key: mariadb-password
+              name: {{ .Values.dbSecret }}
+              key: password
         - name: WORDPRESS_USERNAME
           value: {{ default "" .Values.wordpressUsername | quote }}
         - name: WORDPRESS_PASSWORD

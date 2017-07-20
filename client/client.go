@@ -166,7 +166,7 @@ func bindMySQL(id string) (DBCreds, error) {
 	if err != nil {
 		return creds, err
 	}
-	secret, err := clientset.Core().Secrets(NameDetails[id].Namespace).Get(NameDetails[id].Name + "-mariadb")
+	secret, err := clientset.Core().Secrets(NameDetails[id].Namespace).Get(NameDetails[id].Name + "-mysql")
 	if err != nil {
 		return creds, err
 	}
