@@ -8,7 +8,7 @@ image: bitnami/mariadb:10.1.23-r2
 ## It's recommended to change this to 'Always' if the image tag is 'latest'
 ## ref: http://kubernetes.io/docs/user-guide/images/#updating-images
 imagePullPolicy: IfNotPresent
-
+instanceLabel: Nothing
 ## Specify password for root user
 ## ref: https://github.com/bitnami/bitnami-docker-mariadb/blob/master/README.md#setting-the-root-password-on-first-run
 ##

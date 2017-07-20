@@ -3,6 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ template "fullname" . }}
   labels:
+    instance: {{ .Values.instanceLabel | quote }}
     app: {{ template "fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"

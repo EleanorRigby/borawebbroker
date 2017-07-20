@@ -14,7 +14,6 @@ limitations under the License.
 package controller
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/eleanorrigby/borawebbroker/client"
@@ -107,13 +106,12 @@ func (c *borawebController) CreateServiceInstance(
 	req *brokerapi.CreateServiceInstanceRequest,
 ) (*brokerapi.CreateServiceInstanceResponse, error) {
 
-	var namespaceParam string
-	namespaceParam = req.ContextProfile.Namespace
+	glog.Info("DEBUG  :  Printing createrequest : ", *req)
 
-	glog.Info("Printing request, DEBUG Purpose %v", *req)
+	glog.Info("DEBUG  :  Printing parameters received : ", req.Parameters)
 
 	//Based on Service ID we can invoke specific chart installation.
-	if err := client.Install(req.ServiceID, id, namespaceParam, req.Parameters); err != nil {
+	if err := client.Install(req.ServiceID, (req.Parameters["instance"]).(string), id, req.Parameters["namespace"].(string), req.Parameters); err != nil {
 		return nil, err
 	}
 
@@ -123,7 +121,7 @@ func (c *borawebController) CreateServiceInstance(
 }
 
 func (c *borawebController) GetServiceInstance(id string) (string, error) {
-	return "", errors.New("Unimplemented")
+	return client.NameDetails[id].Name, nil
 }
 
 func (c *borawebController) RemoveServiceInstance(id string) (*brokerapi.DeleteServiceInstanceResponse, error) {
@@ -143,6 +141,8 @@ func (c *borawebController) Bind(
 
 	var err error
 	var creds client.DBCreds
+
+	glog.Infof("DEBUG  :  Printing parameters of bindin request  %v ", req.Parameters)
 
 	if creds, err = client.GetBinding(req.ServiceID, instanceID); err != nil {
 

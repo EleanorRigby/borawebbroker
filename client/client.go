@@ -48,13 +48,13 @@ const (
 //We can potentially return the release name in response to orchestrator
 // Orchestrator can deploy an etcd to store these safely.
 type instanceDetails struct {
-	name      string
-	namespace string
+	Name      string
+	Namespace string
 }
 
 var count int = 1
 
-var namedetails = make(map[string]*instanceDetails)
+var NameDetails = make(map[string]*instanceDetails)
 
 var mapRelNames = map[string]string{
 	//release names
@@ -90,7 +90,7 @@ func bindDrupal(id string) (DBCreds, error) {
 
 	var creds DBCreds
 
-	creds.Host = namedetails[id].name + "-drupal." + namedetails[id].namespace + ".svc.cluster.local"
+	creds.Host = NameDetails[id].Name + "-drupal." + NameDetails[id].Namespace + ".svc.cluster.local"
 	creds.Port = "80"
 	creds.Username = "user"
 
@@ -102,17 +102,17 @@ func bindDrupal(id string) (DBCreds, error) {
 	if err != nil {
 		return creds, err
 	}
-	secret, err := clientset.Core().Secrets(namedetails[id].namespace).Get(namedetails[id].name + "-drupal")
+	secret, err := clientset.Core().Secrets(NameDetails[id].Namespace).Get(NameDetails[id].Name + "-drupal")
 	if err != nil {
 		return creds, err
 	}
 
-	service, err := clientset.Core().Services(namedetails[id].namespace).Get(namedetails[id].name + "-drupal")
+	service, err := clientset.Core().Services(NameDetails[id].Namespace).Get(NameDetails[id].Name + "-drupal")
 	hostname := service.Status.LoadBalancer.Ingress[0].Hostname
 	creds.URL = "http://" + hostname
 	creds.Password = string(secret.Data["drupal-password"])
 
-	glog.Info("Debug data for binding credentials for %s are  %v", namedetails[id].name, creds)
+	glog.Info("Debug data for binding credentials for %s are  %v", NameDetails[id].Name, creds)
 
 	return creds, nil
 
@@ -122,7 +122,7 @@ func bindMariaDB(id string) (DBCreds, error) {
 
 	var creds DBCreds
 
-	creds.Host = namedetails[id].name + "-mariadb." + namedetails[id].namespace + ".svc.cluster.local"
+	creds.Host = NameDetails[id].Name + "-mariadb." + NameDetails[id].Namespace + ".svc.cluster.local"
 	creds.Port = "3306"
 	creds.Database = "dbname"
 	creds.Username = "root"
@@ -135,7 +135,7 @@ func bindMariaDB(id string) (DBCreds, error) {
 	if err != nil {
 		return creds, err
 	}
-	secret, err := clientset.Core().Secrets(namedetails[id].namespace).Get(namedetails[id].name + "-mariadb")
+	secret, err := clientset.Core().Secrets(NameDetails[id].Namespace).Get(NameDetails[id].Name + "-mariadb")
 	if err != nil {
 		return creds, err
 	}
@@ -143,7 +143,7 @@ func bindMariaDB(id string) (DBCreds, error) {
 	creds.Password = string(secret.Data["mariadb-root-password"])
 	creds.Uri = "mysql://" + creds.Username + ":" + creds.Password + "@" + creds.Host + ":" + creds.Port + "/" + creds.Database
 
-	glog.Info("Debug data for binding credentials for %s are  %v", namedetails[id].name, creds)
+	glog.Info("Debug data for binding credentials for %s are  %v", NameDetails[id].Name, creds)
 
 	return creds, nil
 
@@ -153,7 +153,7 @@ func bindMySQL(id string) (DBCreds, error) {
 
 	var creds DBCreds
 
-	creds.Host = namedetails[id].name + "-mysql." + namedetails[id].namespace + ".svc.cluster.local"
+	creds.Host = NameDetails[id].Name + "-mysql." + NameDetails[id].Namespace + ".svc.cluster.local"
 	creds.Port = "3306"
 	creds.Database = "dbname"
 	creds.Username = "root"
@@ -166,7 +166,7 @@ func bindMySQL(id string) (DBCreds, error) {
 	if err != nil {
 		return creds, err
 	}
-	secret, err := clientset.Core().Secrets(namedetails[id].namespace).Get(namedetails[id].name + "-mariadb")
+	secret, err := clientset.Core().Secrets(NameDetails[id].Namespace).Get(NameDetails[id].Name + "-mariadb")
 	if err != nil {
 		return creds, err
 	}
@@ -174,7 +174,7 @@ func bindMySQL(id string) (DBCreds, error) {
 	creds.Password = string(secret.Data["mysql-root-password"])
 	creds.Uri = "mysql://" + creds.Username + ":" + creds.Password + "@" + creds.Host + ":" + creds.Port + "/" + creds.Database
 
-	glog.Info("Debug data for binding credentials for %s are  %v", namedetails[id].name, creds)
+	glog.Info("Debug data for binding credentials for %s are  %v", NameDetails[id].Name, creds)
 
 	return creds, nil
 
@@ -201,7 +201,7 @@ func GetBinding(sid, id string) (DBCreds, error) {
 	}
 
 	if err != nil {
-		glog.Infof("Failed to create binding for %s : %v \n\n", namedetails[id].name, err)
+		glog.Infof("Failed to create binding for %s : %v \n\n", NameDetails[id].Name, err)
 		return creds, err
 	}
 
@@ -290,7 +290,7 @@ func installMySQL(releaseName, namespace string, parameter map[string]interface{
 }
 
 // Install creates a new chart release
-func Install(sid, id, namespace string, parameter map[string]interface{}) error {
+func Install(sid, rel, id, namespace string, parameter map[string]interface{}) error {
 
 	/* *******TODO*******
 	 * @TA : Only one instance will be supported for now per namespace as names will collide. Later we will need to track these.
@@ -298,13 +298,12 @@ func Install(sid, id, namespace string, parameter map[string]interface{}) error 
 
 	var err error
 
-	nameofrelease := ReleaseName(sid) + string(count)
-	count = count + 1
-	namedetails[id] = &instanceDetails{}
-	namedetails[id].name = nameofrelease
-	namedetails[id].namespace = namespace
+	nameofrelease := rel
+	NameDetails[id] = &instanceDetails{}
+	NameDetails[id].Name = nameofrelease
+	NameDetails[id].Namespace = namespace
 
-	glog.Infof("Debug : The value of map being stored is %v", namedetails[id])
+	glog.Infof("Debug  :  The value in map is %v", *NameDetails[id])
 
 	switch sid {
 	case Wordpress_id:
@@ -321,7 +320,7 @@ func Install(sid, id, namespace string, parameter map[string]interface{}) error 
 	}
 
 	if err != nil {
-		glog.Infof("Failed to create %s : %v \n\n", namedetails[id].name, err)
+		glog.Infof("Failed to create %s : %v \n\n", NameDetails[id].Name, err)
 		return err
 	}
 
@@ -331,7 +330,7 @@ func Install(sid, id, namespace string, parameter map[string]interface{}) error 
 // Delete deletes a particular chart release
 func Delete(id string) error {
 	helmClient := helm.NewClient(helm.Host(tillerHost))
-	releasename := namedetails[id].name
+	releasename := NameDetails[id].Name
 	glog.Infof("Debug : Release name to be removed %s", releasename)
 	if _, err := helmClient.DeleteRelease(releasename); err != nil {
 		return err

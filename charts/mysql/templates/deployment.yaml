@@ -4,6 +4,7 @@ metadata:
   name: {{ template "fullname" . }}
   labels:
     app: {{ template "fullname" . }}
+    instance: {{ .Values.instanceLabel | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
@@ -12,6 +13,7 @@ spec:
     metadata:
       labels:
         app: {{ template "fullname" . }}
+        instance: {{ .Values.instanceLabel | quote }}
       annotations:
         pod.beta.kubernetes.io/init-containers: '[
               {
