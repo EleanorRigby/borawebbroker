@@ -20,33 +20,48 @@ type DBCreds struct {
 	Username string
 	Password string
 	Port     string
+	URL      string
 }
 
 const (
 	tillerHost = "tiller-deploy.kube-system.svc.cluster.local:44134"
 
-	chartPath      = "/chart"
+	chartPath      = "/charts"
 	wordpressChart = chartPath + "/wordpress"
 	drupalChart    = chartPath + "/drupal"
 	mariaDBChart   = chartPath + "/mariadb"
 	mySQLChart     = chartPath + "/mysql"
 
-	wordpress_id      = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2468"
-	wordpress_plan_id = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2469"
-	drupal_id         = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2460"
-	drupal_plan_id    = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2461"
-	mariaDB_id        = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2462"
-	mariaDB_plan_id   = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2463"
-	mySQL_id          = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2464"
-	mySQL_plan_id     = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2465"
+	Wordpress_id      = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2468"
+	Wordpress_plan_id = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2469"
+	Drupal_id         = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2460"
+	Drupal_plan_id    = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2461"
+	MariaDB_id        = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2462"
+	MariaDB_plan_id   = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2463"
+	MySQL_id          = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2464"
+	MySQL_plan_id     = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad2465"
 )
+
+//This below is a very unsafe way to store release names.
+//What if broker crashes.
+//We have no way of recovering id-->releasename relation.
+//We can potentially return the release name in response to orchestrator
+// Orchestrator can deploy an etcd to store these safely.
+type instanceDetails struct {
+	name      string
+	namespace string
+}
+
+var count int = 1
+
+var namedetails = make(map[string]*instanceDetails)
 
 var mapRelNames = map[string]string{
 	//release names
 	"4f6e6cf6-ffdd-425f-a2c7-3c9258ad2468": "whackywordpress",
-	"4f6e6cf6-ffdd-425f-a2c7-3c9258ad2460": "DrogoDrupal",
-	"4f6e6cf6-ffdd-425f-a2c7-3c9258ad2462": "MyriadMaria",
-	"4f6e6cf6-ffdd-425f-a2c7-3c9258ad2464": "SuperSQL",
+	"4f6e6cf6-ffdd-425f-a2c7-3c9258ad2460": "drogodrupal",
+	"4f6e6cf6-ffdd-425f-a2c7-3c9258ad2462": "myriadmaria",
+	"4f6e6cf6-ffdd-425f-a2c7-3c9258ad2464": "supersql",
 }
 
 var mapAppInstallFunctions = map[string]interface{}{
@@ -73,9 +88,33 @@ func bindWordpress(id string) (DBCreds, error) {
 
 func bindDrupal(id string) (DBCreds, error) {
 
-	var cred DBCreds
+	var creds DBCreds
 
-	return cred, nil
+	creds.Host = namedetails[id].name + "-drupal." + namedetails[id].namespace + ".svc.cluster.local"
+	creds.Port = "80"
+	creds.Username = "user"
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return creds, err
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return creds, err
+	}
+	secret, err := clientset.Core().Secrets(namedetails[id].namespace).Get(namedetails[id].name + "-drupal")
+	if err != nil {
+		return creds, err
+	}
+
+	service, err := clientset.Core().Services(namedetails[id].namespace).Get(namedetails[id].name + "-drupal")
+	hostname := service.Status.LoadBalancer.Ingress[0].Hostname
+	creds.URL = "http://" + hostname
+	creds.Password = string(secret.Data["drupal-password"])
+
+	glog.Info("Debug data for binding credentials for %s are  %v", namedetails[id].name, creds)
+
+	return creds, nil
 
 }
 
@@ -83,7 +122,7 @@ func bindMariaDB(id string) (DBCreds, error) {
 
 	var creds DBCreds
 
-	creds.Host = ReleaseName(id) + "-mariadb." + ReleaseName(id) + ".svc.cluster.local"
+	creds.Host = namedetails[id].name + "-mariadb." + namedetails[id].namespace + ".svc.cluster.local"
 	creds.Port = "3306"
 	creds.Database = "dbname"
 	creds.Username = "root"
@@ -96,7 +135,7 @@ func bindMariaDB(id string) (DBCreds, error) {
 	if err != nil {
 		return creds, err
 	}
-	secret, err := clientset.Core().Secrets(ReleaseName(id)).Get(ReleaseName(id) + "-mariadb")
+	secret, err := clientset.Core().Secrets(namedetails[id].namespace).Get(namedetails[id].name + "-mariadb")
 	if err != nil {
 		return creds, err
 	}
@@ -104,7 +143,7 @@ func bindMariaDB(id string) (DBCreds, error) {
 	creds.Password = string(secret.Data["mariadb-root-password"])
 	creds.Uri = "mysql://" + creds.Username + ":" + creds.Password + "@" + creds.Host + ":" + creds.Port + "/" + creds.Database
 
-	glog.Info("Debug data for binding credentials for %s are  %v", ReleaseName(id), creds)
+	glog.Info("Debug data for binding credentials for %s are  %v", namedetails[id].name, creds)
 
 	return creds, nil
 
@@ -114,7 +153,7 @@ func bindMySQL(id string) (DBCreds, error) {
 
 	var creds DBCreds
 
-	creds.Host = ReleaseName(id) + "-mysql." + ReleaseName(id) + ".svc.cluster.local"
+	creds.Host = namedetails[id].name + "-mysql." + namedetails[id].namespace + ".svc.cluster.local"
 	creds.Port = "3306"
 	creds.Database = "dbname"
 	creds.Username = "root"
@@ -127,7 +166,7 @@ func bindMySQL(id string) (DBCreds, error) {
 	if err != nil {
 		return creds, err
 	}
-	secret, err := clientset.Core().Secrets(ReleaseName(id)).Get(ReleaseName(id) + "-mariadb")
+	secret, err := clientset.Core().Secrets(namedetails[id].namespace).Get(namedetails[id].name + "-mariadb")
 	if err != nil {
 		return creds, err
 	}
@@ -135,34 +174,34 @@ func bindMySQL(id string) (DBCreds, error) {
 	creds.Password = string(secret.Data["mysql-root-password"])
 	creds.Uri = "mysql://" + creds.Username + ":" + creds.Password + "@" + creds.Host + ":" + creds.Port + "/" + creds.Database
 
-	glog.Info("Debug data for binding credentials for %s are  %v", ReleaseName(id), creds)
+	glog.Info("Debug data for binding credentials for %s are  %v", namedetails[id].name, creds)
 
 	return creds, nil
 
 }
 
 // GetBinding returns credential for the passed instance ID
-func GetBinding(id string) (DBCreds, error) {
+func GetBinding(sid, id string) (DBCreds, error) {
 
 	var err error
 	var creds DBCreds
 
 	switch id {
-	case wordpress_id:
-		creds, err = mapAppBindFunctions["wordpress"].(func(string) (DBCreds, error))(id)
-	case mariaDB_id:
-		creds, err = mapAppBindFunctions["mariadb"].(func(string) (DBCreds, error))(id)
-	case drupal_id:
-		creds, err = mapAppBindFunctions["drupal"].(func(string) (DBCreds, error))(id)
-	case mySQL_id:
-		creds, err = mapAppBindFunctions["mysql"].(func(string) (DBCreds, error))(id)
+	case Wordpress_id:
+		creds, err = mapAppBindFunctions["wordpress"].(func(string) (DBCreds, error))(sid)
+	case MariaDB_id:
+		creds, err = mapAppBindFunctions["mariadb"].(func(string) (DBCreds, error))(sid)
+	case Drupal_id:
+		creds, err = mapAppBindFunctions["drupal"].(func(string) (DBCreds, error))(sid)
+	case MySQL_id:
+		creds, err = mapAppBindFunctions["mysql"].(func(string) (DBCreds, error))(sid)
 	default:
 		glog.Info("Something Very Very Wrong")
 		err = errors.New("Wrong Service ID Passed in Bind function")
 	}
 
 	if err != nil {
-		glog.Infof("Failed to create binding for %s : %v \n\n", ReleaseName(id), err)
+		glog.Infof("Failed to create binding for %s : %v \n\n", namedetails[id].name, err)
 		return creds, err
 	}
 
@@ -177,6 +216,7 @@ func installWordpress(releaseName, namespace string, parameter map[string]interf
 		return err
 	}
 	helmClient := helm.NewClient(helm.Host(tillerHost))
+	glog.Infof("%v   %v   %v   %v   ", wordpressChart, namespace, releaseName, vals)
 	_, err = helmClient.InstallRelease(wordpressChart, namespace, helm.ReleaseName(releaseName), helm.ValueOverrides(vals))
 	if err != nil {
 		glog.Infof("Failed to create wordpress : %v \n\n", err)
@@ -188,13 +228,17 @@ func installWordpress(releaseName, namespace string, parameter map[string]interf
 
 func installDrupal(releaseName, namespace string, parameter map[string]interface{}) error {
 
+	if _, ok := parameter["drupalPassword"]; !ok {
+		parameter["drupalPassword"] = uniuri.New()
+	}
+
 	vals, err := yaml.Marshal(parameter)
 	if err != nil {
 		return err
 	}
 
 	helmClient := helm.NewClient(helm.Host(tillerHost))
-	_, err = helmClient.InstallRelease(chartPath, namespace, helm.ReleaseName(releaseName), helm.ValueOverrides(vals))
+	_, err = helmClient.InstallRelease(drupalChart, namespace, helm.ReleaseName(releaseName), helm.ValueOverrides(vals))
 	if err != nil {
 		glog.Infof("Failed to create drupal : %v \n\n", err)
 		return err
@@ -215,7 +259,7 @@ func installMariaDB(releaseName, namespace string, parameter map[string]interfac
 	}
 
 	helmClient := helm.NewClient(helm.Host(tillerHost))
-	_, err = helmClient.InstallRelease(chartPath, namespace, helm.ReleaseName(releaseName), helm.ValueOverrides(vals))
+	_, err = helmClient.InstallRelease(mariaDBChart, namespace, helm.ReleaseName(releaseName), helm.ValueOverrides(vals))
 	if err != nil {
 		glog.Infof("Failed to create MariaDB : %v \n\n", err)
 		return err
@@ -236,7 +280,7 @@ func installMySQL(releaseName, namespace string, parameter map[string]interface{
 	}
 
 	helmClient := helm.NewClient(helm.Host(tillerHost))
-	_, err = helmClient.InstallRelease(chartPath, namespace, helm.ReleaseName(releaseName), helm.ValueOverrides(vals))
+	_, err = helmClient.InstallRelease(mySQLChart, namespace, helm.ReleaseName(releaseName), helm.ValueOverrides(vals))
 	if err != nil {
 		glog.Infof("Failed to create mysqlDB : %v \n\n", err)
 		return err
@@ -246,7 +290,7 @@ func installMySQL(releaseName, namespace string, parameter map[string]interface{
 }
 
 // Install creates a new chart release
-func Install(id, namespace string, parameter map[string]interface{}) error {
+func Install(sid, id, namespace string, parameter map[string]interface{}) error {
 
 	/* *******TODO*******
 	 * @TA : Only one instance will be supported for now per namespace as names will collide. Later we will need to track these.
@@ -254,22 +298,30 @@ func Install(id, namespace string, parameter map[string]interface{}) error {
 
 	var err error
 
-	switch id {
-	case wordpress_id:
-		err = mapAppInstallFunctions["wordpress"].(func(string, string, map[string]interface{}) error)(ReleaseName(id), namespace, parameter)
-	case mariaDB_id:
-		err = mapAppInstallFunctions["mariadb"].(func(string, string, map[string]interface{}) error)(ReleaseName(id), namespace, parameter)
-	case drupal_id:
-		err = mapAppInstallFunctions["drupal"].(func(string, string, map[string]interface{}) error)(ReleaseName(id), namespace, parameter)
-	case mySQL_id:
-		err = mapAppInstallFunctions["mysql"].(func(string, string, map[string]interface{}) error)(ReleaseName(id), namespace, parameter)
+	nameofrelease := ReleaseName(sid) + string(count)
+	count = count + 1
+	namedetails[id] = &instanceDetails{}
+	namedetails[id].name = nameofrelease
+	namedetails[id].namespace = namespace
+
+	glog.Infof("Debug : The value of map being stored is %v", namedetails[id])
+
+	switch sid {
+	case Wordpress_id:
+		err = mapAppInstallFunctions["wordpress"].(func(string, string, map[string]interface{}) error)(nameofrelease, namespace, parameter)
+	case MariaDB_id:
+		err = mapAppInstallFunctions["mariadb"].(func(string, string, map[string]interface{}) error)(nameofrelease, namespace, parameter)
+	case Drupal_id:
+		err = mapAppInstallFunctions["drupal"].(func(string, string, map[string]interface{}) error)(nameofrelease, namespace, parameter)
+	case MySQL_id:
+		err = mapAppInstallFunctions["mysql"].(func(string, string, map[string]interface{}) error)(nameofrelease, namespace, parameter)
 	default:
 		glog.Info("Something Very Very Wrong")
 		err = errors.New("Wrong Service ID Passed in Install function")
 	}
 
 	if err != nil {
-		glog.Infof("Failed to create %s : %v \n\n", ReleaseName(id), err)
+		glog.Infof("Failed to create %s : %v \n\n", namedetails[id].name, err)
 		return err
 	}
 
@@ -279,9 +331,13 @@ func Install(id, namespace string, parameter map[string]interface{}) error {
 // Delete deletes a particular chart release
 func Delete(id string) error {
 	helmClient := helm.NewClient(helm.Host(tillerHost))
-	if _, err := helmClient.DeleteRelease(ReleaseName(id)); err != nil {
+	releasename := namedetails[id].name
+	glog.Infof("Debug : Release name to be removed %s", releasename)
+	if _, err := helmClient.DeleteRelease(releasename); err != nil {
 		return err
+		glog.Info("This effing error %v", err)
 	}
+
 	return nil
 }
 

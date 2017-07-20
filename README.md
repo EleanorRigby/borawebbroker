@@ -22,4 +22,4 @@ $ git clone https://github.com/EleanorRigby/borawebbroker.git
 $ cd borawebbroker
 $ helm install --name borawebbroker --namespace borawebbroker charts/borawebbroker
 ```
-##END
+

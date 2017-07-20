@@ -46,12 +46,52 @@ func (c *borawebController) Catalog() (*brokerapi.Catalog, error) {
 	return &brokerapi.Catalog{
 		Services: []*brokerapi.Service{
 			{
-				Name:        "web-publishing-service",
-				ID:          client.WebPub,
-				Description: "Web Pub as a service",
+				Name:        "mysql",
+				ID:          client.MySQL_id,
+				Description: "my sql-service",
+				Tags:        []string{"https://www.google.com/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjGhfKHvJbVAhVUVWMKHXWyDfcQjRwIBw&url=https%3A%2F%2Fwww.mysql.com%2Fabout%2Flegal%2Flogos.html&psig=AFQjCNEMKsHpZjGFfG41ZSdtwaIrYS3Vxw&ust=1500592292658463"},
 				Plans: []brokerapi.ServicePlan{{
 					Name:        "default",
-					ID:          "86064792-7ea2-467b-af93-ac9694d96d52",
+					ID:          client.MySQL_plan_id,
+					Description: "Free Use Plan",
+					Free:        true,
+				},
+				},
+				Bindable: true,
+			},
+			{
+				Name:        "wordpress",
+				ID:          client.Wordpress_id,
+				Description: "wordpress service",
+				Plans: []brokerapi.ServicePlan{{
+					Name:        "default",
+					ID:          client.Wordpress_id,
+					Description: "Free Use Plan",
+					Free:        true,
+				},
+				},
+				Bindable: true,
+			},
+			{
+				Name:        "drupal",
+				ID:          client.Drupal_id,
+				Description: "Drupal service",
+				Plans: []brokerapi.ServicePlan{{
+					Name:        "default",
+					ID:          client.Drupal_plan_id,
+					Description: "Free Use Plan",
+					Free:        true,
+				},
+				},
+				Bindable: true,
+			},
+			{
+				Name:        "mariadb",
+				ID:          client.MariaDB_id,
+				Description: "Maria DB service",
+				Plans: []brokerapi.ServicePlan{{
+					Name:        "default",
+					ID:          client.MariaDB_plan_id,
 					Description: "Free Use Plan",
 					Free:        true,
 				},
@@ -68,22 +108,17 @@ func (c *borawebController) CreateServiceInstance(
 ) (*brokerapi.CreateServiceInstanceResponse, error) {
 
 	var namespaceParam string
+	namespaceParam = req.ContextProfile.Namespace
 
-	if req.ContextProfile.Namespace == "" {
-		namespaceParam = client.ReleaseName(id)
-	} else {
-		namespaceParam = client.ReleaseName(id) /****TODO TA ***/ //req.ContextProfile.Namespace
-		//Commented because it is not knowwn right now that how to get name of a namespace while creating a binding.
-		//we will need to create host address which will require clientset.Core().Pods().Get("fg").GetNamespace()
-		//(Just figured this out) make changes later
-	}
+	glog.Info("Printing request, DEBUG Purpose %v", *req)
+
 	//Based on Service ID we can invoke specific chart installation.
-	if err := client.Install(id, namespaceParam, req.Parameters); err != nil {
+	if err := client.Install(req.ServiceID, id, namespaceParam, req.Parameters); err != nil {
 		return nil, err
 	}
 
 	glog.Infof("Created %s Service Instance:\n\n", id)
-	//glog.Info("Printing request %v", *req)
+
 	return &brokerapi.CreateServiceInstanceResponse{}, nil
 }
 
@@ -109,7 +144,7 @@ func (c *borawebController) Bind(
 	var err error
 	var creds client.DBCreds
 
-	if creds, err = client.GetBinding(instanceID); err != nil {
+	if creds, err = client.GetBinding(req.ServiceID, instanceID); err != nil {
 
 		if err != nil {
 			return nil, err
