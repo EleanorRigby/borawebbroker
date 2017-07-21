@@ -33,7 +33,7 @@ serviceType: ClusterIP
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
 ##
 persistence:
-  enabled: true
+  enabled: false
   
   ## A manually managed Persistent Volume and Claim
   ## Requires persistence.enabled: true

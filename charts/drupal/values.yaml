@@ -1,3 +1,4 @@
+dbSecret: dbsecret
 ## Bitnami Drupal image version
 ## ref: https://hub.docker.com/r/bitnami/drupal/tags/
 ##
@@ -63,9 +64,9 @@ serviceType: LoadBalancer
 ## ref: http://kubernetes.io/docs/user-guide/ingress/
 ##
 ingress:
-  enabled: false
+  enabled: true
   # Used to create Ingress record (should used with ServiceType: ClusterIP).
-  # hostname: drupal.local
+  hostname: drupal.kubelink.borathon.photon-infra.com
 
   ## Ingress annotations
   ##
@@ -84,7 +85,7 @@ ingress:
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
 ##
 persistence:
-  enabled: true
+  enabled: false
   apache:
     ## If defined, volume.beta.kubernetes.io/storage-class: <storageClass>
     ## Default: volume.alpha.kubernetes.io/storage-class: default

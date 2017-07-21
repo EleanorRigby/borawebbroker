@@ -20,14 +20,20 @@ spec:
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         env:
         - name: MARIADB_HOST
-          value: {{ template "mariadb.fullname" . }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.dbSecret }}
+              key: host
         - name: MARIADB_PORT_NUMBER
-          value: "3306"
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.dbSecret }}
+              key: port
         - name: MARIADB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ template "mariadb.fullname" . }}
-              key: mariadb-root-password
+              name: {{ .Values.dbSecret }}
+              key: password
         - name: DRUPAL_USERNAME
           value: {{ default "" .Values.drupalUsername | quote }}
         - name: DRUPAL_PASSWORD
