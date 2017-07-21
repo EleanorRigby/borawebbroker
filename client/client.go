@@ -186,15 +186,15 @@ func GetBinding(sid, id string) (DBCreds, error) {
 	var err error
 	var creds DBCreds
 
-	switch id {
+	switch sid {
 	case Wordpress_id:
-		creds, err = mapAppBindFunctions["wordpress"].(func(string) (DBCreds, error))(sid)
+		creds, err = mapAppBindFunctions["wordpress"].(func(string) (DBCreds, error))(id)
 	case MariaDB_id:
-		creds, err = mapAppBindFunctions["mariadb"].(func(string) (DBCreds, error))(sid)
+		creds, err = mapAppBindFunctions["mariadb"].(func(string) (DBCreds, error))(id)
 	case Drupal_id:
-		creds, err = mapAppBindFunctions["drupal"].(func(string) (DBCreds, error))(sid)
+		creds, err = mapAppBindFunctions["drupal"].(func(string) (DBCreds, error))(id)
 	case MySQL_id:
-		creds, err = mapAppBindFunctions["mysql"].(func(string) (DBCreds, error))(sid)
+		creds, err = mapAppBindFunctions["mysql"].(func(string) (DBCreds, error))(id)
 	default:
 		glog.Info("Something Very Very Wrong")
 		err = errors.New("Wrong Service ID Passed in Bind function")
@@ -204,6 +204,8 @@ func GetBinding(sid, id string) (DBCreds, error) {
 		glog.Infof("Failed to create binding for %s : %v \n\n", NameDetails[id].Name, err)
 		return creds, err
 	}
+
+	glog.Infof("DEBUG  :  Creds ", creds)
 
 	return creds, nil
 

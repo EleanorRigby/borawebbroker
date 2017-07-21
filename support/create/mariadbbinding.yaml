@@ -5,8 +5,8 @@ metadata:
   namespace: default
 spec:
   instanceRef:
-    name: mariadb-test-1
-  secretName: dbSecret
+    name: mariadb-test-11
+  secretName: dbsecret
   parameters:
     instance: mariadb-binding
     namespace: default

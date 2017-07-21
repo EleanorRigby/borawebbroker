@@ -1,12 +1,12 @@
 apiVersion: servicecatalog.k8s.io/v1alpha1
 kind: Instance
 metadata:
-  name: mysql-test-1
+  name: mysql-test-11
   namespace: default
 spec:
   serviceClassName: mysql
   planName: default
   parameters:
-    instance: mysql-test-1
+    instance: mysql-test-11
     namespace: default
-    instanceLabel: mysql-test-1
+    instanceLabel: mysql-test-11

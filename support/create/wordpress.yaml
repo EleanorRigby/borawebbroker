@@ -1,21 +1,13 @@
 apiVersion: servicecatalog.k8s.io/v1alpha1
 kind: Instance
 metadata:
-  name: wordpress-i-1
-spec:
-  serviceClassName: wordpress
-  planName: default
-
-apiVersion: servicecatalog.k8s.io/v1alpha1
-kind: Instance
-metadata:
-  name: wordpress-test-1
+  name: wordpress-test-22
   namespace: default
 spec:
   serviceClassName: wordpress
   planName: default
   parameters:
-    instance: wordpress-test-1
+    instance: wordpress-test-22
     namespace: default
-    instanceLabel: wordpress-test-1
-    dbSecret: dbSecret
+    instanceLabel: wordpress-test-22
+    dbSecret: dbsecret-1

@@ -1,13 +1,13 @@
 apiVersion: servicecatalog.k8s.io/v1alpha1
 kind: Binding
 metadata:
-  name: mysql-binding
+  name: mysqlbinding-test-24
   namespace: default
 spec:
   instanceRef:
-    name: mysql-test-1
-  secretName: dbSecret
+    name: mysql-test-11
+  secretName: dbsecret-1
   parameters:
-    instance: mysql-binding
+    instance:  mysqlbinding-test-24
     namespace: default
-    instanceLabel: mysql-binding
+    instanceLabel: mysqlbinding

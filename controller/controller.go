@@ -144,11 +144,10 @@ func (c *borawebController) Bind(
 
 	glog.Infof("DEBUG  :  Printing parameters of bindin request  %v ", req.Parameters)
 
-	if creds, err = client.GetBinding(req.ServiceID, instanceID); err != nil {
+	if creds, err = client.GetBinding(req.ServiceID, instanceID); err == nil {
 
-		if err != nil {
-			return nil, err
-		}
+		glog.Infof("DEBUG  :  Creds ", creds)
+
 		return &brokerapi.CreateServiceBindingResponse{
 			Credentials: brokerapi.Credential{
 				"username": creds.Username,
@@ -160,6 +159,10 @@ func (c *borawebController) Bind(
 			},
 		}, nil
 
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	return nil, err
