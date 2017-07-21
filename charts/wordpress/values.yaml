@@ -102,7 +102,7 @@ serviceType: LoadBalancer
 ##
 ingress:
     enabled: true
-    hostname: wp.
+    hostname: wordpress.kubelink.borathon.photon-infra.com
 
     ## Ingress annotations
     ##
@@ -121,7 +121,7 @@ ingress:
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
 ##
 persistence:
-  enabled: true
+  enabled: false
   ## If defined, volume.beta.kubernetes.io/storage-class: <storageClass>
   ## Default: volume.alpha.kubernetes.io/storage-class: default
   ##
