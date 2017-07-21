@@ -1,5 +1,5 @@
 dbSecret: dbsecret
-
+instanceLabel: Nothing
 ## Bitnami WordPress image version
 ## ref: https://hub.docker.com/r/bitnami/wordpress/tags/
 ##

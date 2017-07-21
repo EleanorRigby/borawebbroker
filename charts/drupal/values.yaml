@@ -1,3 +1,5 @@
+instanceLabel: Nothing
+
 dbSecret: dbsecret
 ## Bitnami Drupal image version
 ## ref: https://hub.docker.com/r/bitnami/drupal/tags/

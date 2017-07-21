@@ -7,12 +7,14 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
+    instance: {{ .Values.instanceLabel | quote }}
 spec:
   replicas: 1
   template:
     metadata:
       labels:
         app: {{ template "fullname" . }}
+        instance: {{ .Values.instanceLabel | quote }}
     spec:
       containers:
       - name: {{ template "fullname" . }}
